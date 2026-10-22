@@ -1,0 +1,31 @@
+/* Shared base styles. Page layout and typography live inline in each page,
+   exported from the design canvas; edit there or move rules here as you go. */
+
+:root {
+  --ivory: #FAF9F5;
+  --ink: #141413;
+  --grey-dark: #3D3D3A;
+  --grey: #5E5D59;
+  --rule: #D6D3C8;
+  --accent: #B5502F;
+}
+
+html { background: var(--ivory); }
+body { margin: 0; }
+
+/* Toggled blocks (contact form, Marginalia tabs). */
+[hidden] { display: none !important; }
+
+/* Marginalia epigraph: drop the forced line break on narrow screens. */
+@media (max-width: 640px) {
+  .epigraph-break { display: none; }
+}
+
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Contact and profile icons on the home page. */
+[aria-label="Say hello"]:hover, [aria-label="Google Scholar"]:hover, [aria-label="LinkedIn"]:hover,
+[aria-label="GitHub"]:hover, [aria-label="LessWrong"]:hover { color: var(--ink) !important; }

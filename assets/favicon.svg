@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Two waves: the site's water thread, in the autumn orange of the portrait. -->
+  <g fill="none" stroke="#D27E4B" stroke-width="3.2" stroke-linecap="round">
+    <path d="M4 12.5q4-4.5 8 0t8 0t8 0"/>
+    <path d="M4 21.5q4-4.5 8 0t8 0t8 0"/>
+  </g>
+</svg>
