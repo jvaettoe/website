@@ -1,12 +1,5 @@
-// Small interactions for the static site: the email link on the home page,
-// the Writing / Reading / Watching tabs on Marginalia, and the language
-// switch on the poem and essay pages.
-
-// Home: build the mailto link at runtime, so the plain address never appears
-// in the HTML for spam robots to harvest.
-document.querySelectorAll('[data-mail-user]').forEach((a) => {
-  a.href = 'mailto:' + a.dataset.mailUser + '@' + a.dataset.mailDomain;
-});
+// Small interactions for the static site: the Writing / Reading / Watching
+// tabs on Marginalia and the language switch on the poem and essay pages.
 
 // Marginalia: switch tabs. Selected tab is dark and underlined, others grey.
 const tabs = document.querySelectorAll('[role="tab"][data-tab]');
