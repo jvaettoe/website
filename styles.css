@@ -27,5 +27,5 @@ a:focus-visible, button:focus-visible {
 }
 
 /* Contact and profile icons on the home page. */
-[aria-label="Say hello"]:hover, [aria-label="Google Scholar"]:hover, [aria-label="LinkedIn"]:hover,
+[aria-label^="Email"]:hover, [aria-label="Google Scholar"]:hover, [aria-label="LinkedIn"]:hover,
 [aria-label="GitHub"]:hover, [aria-label="LessWrong"]:hover { color: var(--ink) !important; }

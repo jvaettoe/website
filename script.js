@@ -1,34 +1,11 @@
-// Small interactions for the static site: the "Say hello" form on the home
-// page and the Writing / Reading / Watching tabs on Marginalia.
+// Small interactions for the static site: the email link on the home page,
+// the Writing / Reading / Watching tabs on Marginalia, and the language
+// switch on the poem and essay pages.
 
-// Home: "Say hello" opens the form; "Send" shows the thank-you note.
-// The form is handled by Netlify Forms once the site is deployed on Netlify.
-function showOnly(name) {
-  document.querySelectorAll('[data-if]').forEach((el) => {
-    el.hidden = el.dataset.if !== name;
-  });
-}
-
-document.addEventListener('click', (e) => {
-  const action = e.target.closest('[data-action]');
-  if (!action) return;
-  if (action.dataset.action === 'openForm') {
-    showOnly('formOpen');
-    const first = document.querySelector('[data-if="formOpen"] input');
-    if (first) first.focus();
-  } else if (action.dataset.action === 'send') {
-    const form = action.closest('form');
-    if (!form || !form.reportValidity()) return;
-    // Netlify Forms: post the fields in the background, then thank the sender.
-    // If that fails, fall back to a normal submit (Netlify shows its own thank-you page).
-    fetch('/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(new FormData(form)).toString(),
-    })
-      .then((res) => (res.ok ? showOnly('sent') : form.submit()))
-      .catch(() => form.submit());
-  }
+// Home: build the mailto link at runtime, so the plain address never appears
+// in the HTML for spam robots to harvest.
+document.querySelectorAll('[data-mail-user]').forEach((a) => {
+  a.href = 'mailto:' + a.dataset.mailUser + '@' + a.dataset.mailDomain;
 });
 
 // Marginalia: switch tabs. Selected tab is dark and underlined, others grey.
