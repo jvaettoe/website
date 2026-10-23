@@ -36,4 +36,4 @@ a:focus-visible, button:focus-visible {
 .teaching .inst:first-child { margin-top: 0; }
 .teaching .years { padding-left: 20px; color: #5E5D59; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .teaching .course { color: #141413; }
-.teaching .role { color: #5E5D59; white-space: nowrap; }
+.teaching .role { color: #5E5D59; font-size: 14px; white-space: nowrap; }
