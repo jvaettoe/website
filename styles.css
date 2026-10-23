@@ -31,13 +31,13 @@ a:focus-visible, button:focus-visible {
 [aria-label="GitHub"]:hover, [aria-label="LessWrong"]:hover { color: var(--ink) !important; }
 
 /* CV: Teaching as one grid (years · course · role); on phones the role goes under the course */
-.teaching { display: grid; grid-template-columns: 84px max-content auto; column-gap: 20px; font-size: 15px; line-height: 1.55; align-content: start; align-items: baseline; }
+.teaching { display: grid; grid-template-columns: 104px max-content auto; column-gap: 20px; font-size: 15px; line-height: 1.55; align-content: start; align-items: baseline; }
 .teaching .inst { grid-column: 1 / -1; color: #141413; margin-top: 14px; }
 .teaching .inst:first-child { margin-top: 0; }
-.teaching .years { color: #5E5D59; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.teaching .years { padding-left: 20px; color: #5E5D59; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .teaching .course { color: #141413; min-width: 0; }
 .teaching .role { color: #5E5D59; font-size: 14px; white-space: nowrap; }
 @media (max-width: 760px) {
-  .teaching { grid-template-columns: 84px minmax(0, 1fr); }
+  .teaching { grid-template-columns: 104px minmax(0, 1fr); }
   .teaching .role { grid-column: 2; margin-bottom: 6px; }
 }
