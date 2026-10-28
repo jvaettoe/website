@@ -197,7 +197,7 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
 <script>
 (function(){
 const DATA = window.TOY_DATA; const $ = id => document.getElementById(id); const NS = 'http://www.w3.org/2000/svg';
-const TILED = new Set(['tiledlong', 'slow10def', 'bandff', 'ff10']);
+const TILED = new Set(['tiledlong', 'slow10def', 'bandff', 'ff10', 'ffdef']);
 function optLabel(d){ return d.meta.kind === 'oracle' ? d.key : `α<sub>imp</sub> = ${fmtA(d.meta.alpha)}<span class="init"> · ${TILED.has(d.key) ? 'FF init' : 'random init'}</span>`; }
 const collapsed = d => d.meta.kind === 'trained' && d.stats.w_in.L0 === 0 && d.stats.w_out.L0 === 0;
 const TITLE = {FF: 'feature read, feature write', FN: 'feature read, neuron write', NN: 'neuron read, neuron write'};
