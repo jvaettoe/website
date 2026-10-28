@@ -189,13 +189,13 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
     <p>Rows run bottom to top: input features, read components of w_in, neurons, write components of w_out, outputs. Each component is a rank-one piece V<sub>c</sub>U<sub>c</sub><sup>T</sup> of one weight matrix, and an importance network opens or closes it on each input.</p>
     <p>Edges are the exact linear contributions on the current input: x<sub>j</sub>V<sub>jc</sub>, then g<sub>c</sub>a<sub>c</sub>U<sub>cn</sub> into the neuron pre-activation, h<sub>n</sub>V<sub>nc</sub>, and g′<sub>c</sub>b<sub>c</sub>U<sub>ck</sub> into the output. Width and depth of colour scale with magnitude. Above the output row, a black number marks each output the target model actually produces on this input (|y| above 0.05); grey numbers are position ticks every 8.</p>
     <p><span class="sw" style="background:rgb(var(--pos))"></span>positive &nbsp; <span class="sw" style="background:rgb(var(--neg))"></span>negative. Square size, colour depth and edge width are scaled to the largest value each row reaches with one feature on at amplitude 1, so weak inputs look weak; values below a thousandth of that are drawn as zero. Outline weight shows the gate, from 0 to 1.</p>
-    <p>Faded squares with dotted outlines, and dotted edges, are components whose gate is closed on this input. They are drawn with what they would carry if open; the masked forward pass does not use them. Gates are computed from the target model's activations, as in VPD. Nearly invisible squares are dead components. Oracle options are the closed-form tilings of the VPD objective with analytic gates; Learned options are trained VPD runs. Regions name the oracle option (FF, FN, NN, NF or null, the all-gates-off decomposition) with the lowest VPD loss at each α<sub>imp</sub>; the side-panel plot draws the lowest oracle loss against α<sub>imp</sub> (log–log), names each region on top, and puts a dot where the selected decomposition sits.</p>
+    <p>Faded squares with dotted outlines, and dotted edges, are components whose gate is closed on this input. They are drawn with what they would carry if open; the masked forward pass does not use them. Gates are computed from the target model's activations, as in VPD. Nearly invisible squares are dead components. Oracle options are the closed-form tilings of the VPD objective with analytic gates (a feature component opens only on a positive input, since a negative one produces no output; a neuron component opens when its neuron fires); Learned options are trained VPD runs. Regions name the oracle option (FF, FN or null, the all-gates-off decomposition) with the lowest VPD loss at each α<sub>imp</sub>; the side-panel plot draws the lowest oracle loss against α<sub>imp</sub> (log–log), names each region on top, and puts a dot where the selected decomposition sits.</p>
   </div>
 </details>
 
 <footer>© 2026 Joonas Mikael Vättö</footer>
 </div>
-<script src="assets/compressed-computation-circuits/data.js?v=8cd05c6fc9"></script>
+<script src="assets/compressed-computation-circuits/data.js?v=d8a54afec4"></script>
 <script>
 (function(){
 const DATA = window.TOY_DATA; const $ = id => document.getElementById(id); const NS = 'http://www.w3.org/2000/svg';
@@ -223,7 +223,7 @@ function region(a){ return (M.bands || []).find(([, lo, hi]) => a >= lo && (hi =
 function regionPlot(m){ const rt = M.oracle_rt, b = M.bands || []; if (!rt) return '';
   const tot = (r, a) => a * r.importance + 2 * r.stoch_recon + 2 * r.pgd_recon;
   const W = 356, H = 200, L = 30, R = 34, T = 30, B = 32, x0 = -5, x1 = 0;
-  const keys = ['FF', 'FN', 'NN', 'NF', 'null'], grid = Array.from({length: 81}, (_, i) => x0 + (x1 - x0) * i / 80);
+  const keys = ['FF', 'FN', 'null'].filter(k => rt[k]), grid = Array.from({length: 81}, (_, i) => x0 + (x1 - x0) * i / 80);
   let lo = Infinity, hi = -Infinity; for (const k of keys) for (const g of grid) { const v = Math.log10(Math.max(1e-12, tot(rt[k], 10 ** g))); lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const A0 = 1e-4, here = m.kind === 'trained' && m.rt ? [Math.log10(m.alpha), Math.log10(tot(m.rt, m.alpha))] : rt[DEC.key] ? [Math.log10(A0), Math.log10(tot(rt[DEC.key], A0))] : null; if (here) { lo = Math.min(lo, here[1]); hi = Math.max(hi, here[1]); }
   lo = Math.floor(lo); hi = Math.ceil(hi);
@@ -294,15 +294,15 @@ function randomInput(){ x = new Float64Array(M.F); if (M.eq1) { x[Math.floor(Mat
 function forward(){ const F = M.F, N = M.N, C = DEC.V.w_in[0].length, gated = $('gated').checked;
   const Vi = DEC.V.w_in, Ui = DEC.U.w_in, Vo = DEC.V.w_out, Uo = DEC.U.w_out;
   const a = new Float64Array(C); for (let j = 0; j < F; j++) if (x[j]) { const r = Vi[j]; for (let c = 0; c < C; c++) a[c] += x[j] * r[c]; }
-  let gin; if (!gated) gin = new Float64Array(C).fill(1); else if (DEC.ci) gin = Float64Array.from(ciNet(DEC.ci.w_in, x), clamp01); else { gin = new Float64Array(C); if (DEC.meta.rb === 'feature') { for (let j = 0; j < F; j++) if (x[j]) gin[j] = 1; } }
+  let gin; if (!gated) gin = new Float64Array(C).fill(1); else if (DEC.ci) gin = Float64Array.from(ciNet(DEC.ci.w_in, x), clamp01); else { gin = new Float64Array(C); if (DEC.meta.rb === 'feature') { for (let j = 0; j < F; j++) if (x[j] > 0) gin[j] = 1; } }
   const hpre = new Float64Array(N);
-  if (gated && !DEC.ci && DEC.meta.rb === 'neuron') { const hp = new Float64Array(N); for (let j = 0; j < F; j++) if (x[j]) for (let n = 0; n < N; n++) hp[n] += x[j] * M.w_in[j][n]; for (let n = 0; n < N; n++) if (hp[n] !== 0) gin[F + n] = 1; }
+  if (gated && !DEC.ci && DEC.meta.rb === 'neuron') { const hp = new Float64Array(N); for (let j = 0; j < F; j++) if (x[j]) for (let n = 0; n < N; n++) hp[n] += x[j] * M.w_in[j][n]; for (let n = 0; n < N; n++) if (hp[n] > 0) gin[F + n] = 1; }
   for (let c = 0; c < C; c++) if (gin[c] && a[c]) { const r = Ui[c]; for (let n = 0; n < N; n++) hpre[n] += gin[c] * a[c] * r[n]; }
   const h = hpre.map(v => Math.max(0, v));
   const b = new Float64Array(C); for (let n = 0; n < N; n++) if (h[n]) { const r = Vo[n]; for (let c = 0; c < C; c++) b[c] += h[n] * r[c]; }
   // target model; VPD gates the write side on the TARGET hidden activation (core/vpd.py _ci), not the masked one
   const hpT = new Float64Array(N); for (let j = 0; j < F; j++) if (x[j]) for (let n = 0; n < N; n++) hpT[n] += x[j] * M.w_in[j][n]; const hT = hpT.map(v => Math.max(0, v));
-  let gout; if (!gated) gout = new Float64Array(C).fill(1); else if (DEC.ci) gout = Float64Array.from(ciNet(DEC.ci.w_out, hT), clamp01); else { gout = new Float64Array(C); if (DEC.meta.wb === 'feature') { for (let j = 0; j < F; j++) if (x[j]) gout[j] = 1; } else { for (let n = 0; n < N; n++) if (hT[n]) gout[F + n] = 1; } }
+  let gout; if (!gated) gout = new Float64Array(C).fill(1); else if (DEC.ci) gout = Float64Array.from(ciNet(DEC.ci.w_out, hT), clamp01); else { gout = new Float64Array(C); if (DEC.meta.wb === 'feature') { for (let j = 0; j < F; j++) if (x[j] > 0) gout[j] = 1; } else { for (let n = 0; n < N; n++) if (hT[n]) gout[F + n] = 1; } }
   const y = new Float64Array(F); for (let c = 0; c < C; c++) if (gout[c] && b[c]) { const r = Uo[c]; for (let k = 0; k < F; k++) y[k] += gout[c] * b[c] * r[k]; }
   const yT = new Float64Array(F); for (let n = 0; n < N; n++) if (hT[n]) for (let k = 0; k < F; k++) yT[k] += hT[n] * M.w_out[n][k];
   return {a, gin, hpre, h, hT, b, gout, y, yT, C}; }
