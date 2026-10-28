@@ -195,7 +195,7 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
 
 <footer>© 2026 Joonas Mikael Vättö</footer>
 </div>
-<script src="assets/compressed-computation-circuits/data.js?v=06e8c5f275"></script>
+<script src="assets/compressed-computation-circuits/data.js?v=8cd05c6fc9"></script>
 <script>
 (function(){
 const DATA = window.TOY_DATA; const $ = id => document.getElementById(id); const NS = 'http://www.w3.org/2000/svg';
@@ -288,7 +288,9 @@ function computeRefs(){ const keepX = x, keepF = fw; REF = {in: 1, rc: 0, nr: 0,
 // neuron and output scales include the target model, so a collapsed decomposition's near-zero values read as zero
 function live(row, v){ return Math.abs(v) > DUST * REF[row]; }
 function setCellKeepInput(di){ const keep = x; setCell(CI, di); x = keep; update(); }
-function randomInput(){ x = new Float64Array(M.F); if (M.eq1) { x[Math.floor(Math.random() * M.F)] = Math.random() * 2 - 1; update(); return; } let k = 0; for (let j = 0; j < M.F; j++) if (Math.random() < M.p) { x[j] = Math.random() * 2 - 1; k++; } if (!k) x[Math.floor(Math.random() * M.F)] = Math.random() * 2 - 1; update(); }
+// random inputs are positive (0.2 to 1); shift-click gives a negative value
+const posVal = () => 0.2 + 0.8 * Math.random();
+function randomInput(){ x = new Float64Array(M.F); if (M.eq1) { x[Math.floor(Math.random() * M.F)] = posVal(); update(); return; } let k = 0; for (let j = 0; j < M.F; j++) if (Math.random() < M.p) { x[j] = posVal(); k++; } if (!k) x[Math.floor(Math.random() * M.F)] = posVal(); update(); }
 function forward(){ const F = M.F, N = M.N, C = DEC.V.w_in[0].length, gated = $('gated').checked;
   const Vi = DEC.V.w_in, Ui = DEC.U.w_in, Vo = DEC.V.w_out, Uo = DEC.U.w_out;
   const a = new Float64Array(C); for (let j = 0; j < F; j++) if (x[j]) { const r = Vi[j]; for (let c = 0; c < C; c++) a[c] += x[j] * r[c]; }
