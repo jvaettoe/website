@@ -189,18 +189,20 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
     <p>Rows run bottom to top: input features, read components of w_in, neurons, write components of w_out, outputs. Each component is a rank-one piece V<sub>c</sub>U<sub>c</sub><sup>T</sup> of one weight matrix, and an importance network opens or closes it on each input.</p>
     <p>Edges are the exact linear contributions on the current input: x<sub>j</sub>V<sub>jc</sub>, then g<sub>c</sub>a<sub>c</sub>U<sub>cn</sub> into the neuron pre-activation, h<sub>n</sub>V<sub>nc</sub>, and g′<sub>c</sub>b<sub>c</sub>U<sub>ck</sub> into the output. Width and depth of colour scale with magnitude. Above the output row, a black number marks each output the target model actually produces on this input (|y| above 0.05); grey numbers are position ticks every 8.</p>
     <p><span class="sw" style="background:rgb(var(--pos))"></span>positive &nbsp; <span class="sw" style="background:rgb(var(--neg))"></span>negative. Square size, colour depth and edge width are scaled to the largest value each row reaches with one feature on at amplitude 1, so weak inputs look weak; values below a thousandth of that are drawn as zero. Outline weight shows the gate, from 0 to 1.</p>
-    <p>Faded squares with dotted outlines, and dotted edges, are components whose gate is closed on this input. They are drawn with what they would carry if open; the masked forward pass does not use them. Gates are computed from the target model's activations, as in VPD. Nearly invisible squares are dead components. Oracle options are the closed-form tilings of the VPD objective with analytic gates (a feature component opens only on a positive input, since a negative one produces no output; a neuron component opens when its neuron fires); Learned options are trained VPD runs. Regions name the oracle option (FF, FN or null, the all-gates-off decomposition) with the lowest VPD loss at each α<sub>imp</sub>; the side-panel plot draws the lowest oracle loss against α<sub>imp</sub> (log–log), names each region on top, and puts a dot where the selected decomposition sits.</p>
+    <p>Faded squares with dotted outlines, and dotted edges, are components whose gate is closed on this input. They are drawn with what they would carry if open; the masked forward pass does not use them. Gates are computed from the target model's activations, as in VPD. Nearly invisible squares are dead components. Oracle options are the closed-form tilings of the VPD objective with analytic gates (a feature component opens only on a positive input, since a negative one produces no output; a neuron component opens when its neuron fires); Learned options are trained VPD runs. Regions name the oracle option (feature-aligned, neuron-aligned or null, the all-gates-off decomposition) with the lowest VPD loss at each α<sub>imp</sub>; the side-panel plot draws the lowest oracle loss against α<sub>imp</sub> (log–log), names each region on top, and puts a dot where the selected decomposition sits.</p>
   </div>
 </details>
 
 <footer>© 2026 Joonas Mikael Vättö</footer>
 </div>
-<script src="assets/compressed-computation-circuits/data.js?v=d8a54afec4"></script>
+<script src="assets/compressed-computation-circuits/data.js?v=a8f277c7f3"></script>
 <script>
 (function(){
 const DATA = window.TOY_DATA; const $ = id => document.getElementById(id); const NS = 'http://www.w3.org/2000/svg';
 const TILED = new Set(['tiledlong', 'slow10def', 'bandff', 'ff10', 'ffdef', 'ffwinff']);
-function optLabel(d){ return d.meta.kind === 'oracle' ? d.key : `α<sub>imp</sub> = ${fmtA(d.meta.alpha)}<span class="init"> · ${TILED.has(d.key) ? 'FF init' : 'random init'}</span>`; }
+const NAME = {FF: 'feature-aligned', FN: 'neuron-aligned', null: 'null'}, SHORTN = {FF: 'feature', FN: 'neuron', null: 'null'};
+const capf = t => t[0].toUpperCase() + t.slice(1);
+function optLabel(d){ return d.meta.kind === 'oracle' ? capf(NAME[d.key] || d.key) : `α<sub>imp</sub> = ${fmtA(d.meta.alpha)}<span class="init"> · ${TILED.has(d.key) ? 'feature-aligned init' : 'random init'}</span>`; }
 const collapsed = d => d.meta.kind === 'trained' && d.stats.w_in.L0 === 0 && d.stats.w_out.L0 === 0;
 const TITLE = {FF: 'feature read, feature write', FN: 'feature read, neuron write', NN: 'neuron read, neuron write'};
 let CW = 17, D = 8, ROWH = 150; const LABW = 104, TOP = 30, BOT = 30;
@@ -222,7 +224,7 @@ function fmtA(a){ return a >= 0.01 ? String(+a.toPrecision(2)) : sci(a); }
 function region(a){ return (M.bands || []).find(([, lo, hi]) => a >= lo && (hi === null || a < hi)); }
 function regionPlot(m){ const rt = M.oracle_rt, b = M.bands || []; if (!rt) return '';
   const tot = (r, a) => a * r.importance + 2 * r.stoch_recon + 2 * r.pgd_recon;
-  const W = 356, H = 200, L = 30, R = 34, T = 30, B = 32, x0 = -5, x1 = 0;
+  const W = 356, H = 200, L = 30, R = 92, T = 30, B = 32, x0 = -5, x1 = 0;   // R: room for the end labels
   const keys = ['FF', 'FN', 'null'].filter(k => rt[k]), grid = Array.from({length: 81}, (_, i) => x0 + (x1 - x0) * i / 80);
   let lo = Infinity, hi = -Infinity; for (const k of keys) for (const g of grid) { const v = Math.log10(Math.max(1e-12, tot(rt[k], 10 ** g))); lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const A0 = 1e-4, here = m.kind === 'trained' && m.rt ? [Math.log10(m.alpha), Math.log10(tot(m.rt, m.alpha))] : rt[DEC.key] ? [Math.log10(A0), Math.log10(tot(rt[DEC.key], A0))] : null; if (here) { lo = Math.min(lo, here[1]); hi = Math.max(hi, here[1]); }
@@ -230,7 +232,7 @@ function regionPlot(m){ const rt = M.oracle_rt, b = M.bands || []; if (!rt) retu
   const X = v => L + (W - L - R) * (v - x0) / (x1 - x0), Y = v => T + (H - T - B) * (hi - v) / (hi - lo);
   const reg = m.kind === 'trained' ? region(m.alpha) : null; let svg = '';
   b.forEach(r => { const a = Math.max(x0, r[1] > 0 ? Math.log10(r[1]) : x0), z = Math.min(x1, r[2] === null ? x1 : Math.log10(r[2])); if (z <= a) return; const on = r === reg;
-    svg += `<rect class="rp-band${on ? ' on' : ''}" x="${X(a).toFixed(1)}" y="${T}" width="${(X(z) - X(a)).toFixed(1)}" height="${H - T - B}"/><text class="rp-bl${on ? ' on' : ''}" x="${((X(a) + X(z)) / 2).toFixed(1)}" y="${T - 4}" text-anchor="middle">${r[0]}</text>`; });
+    svg += `<rect class="rp-band${on ? ' on' : ''}" x="${X(a).toFixed(1)}" y="${T}" width="${(X(z) - X(a)).toFixed(1)}" height="${H - T - B}"/><text class="rp-bl${on ? ' on' : ''}" x="${((X(a) + X(z)) / 2).toFixed(1)}" y="${T - 4}" text-anchor="middle">${(X(z) - X(a)) > 6.2 * (NAME[r[0]] || r[0]).length ? (NAME[r[0]] || r[0]) : (SHORTN[r[0]] || r[0])}</text>`; });
   svg += `<line class="rp-ax" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/><line class="rp-ax" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"/>`;
   for (let e = x0; e <= x1; e++) svg += `<text class="rp-tk" x="${X(e).toFixed(1)}" y="${H - B + 13}" text-anchor="middle">10${SUP(e)}</text>`;
   for (let e = lo; e <= hi; e += Math.max(1, Math.ceil((hi - lo) / 4))) svg += `<text class="rp-tk" x="${L - 4}" y="${(Y(e) + 3).toFixed(1)}" text-anchor="end">10${SUP(e)}</text>`;
@@ -241,10 +243,10 @@ function regionPlot(m){ const rt = M.oracle_rt, b = M.bands || []; if (!rt) retu
   ends.sort((p, q) => p[1] - q[1]); for (let i = 1; i < ends.length; i++) ends[i][1] = Math.max(ends[i][1], ends[i - 1][1] + 11);
   const env = grid.map(g => `${X(g).toFixed(1)},${Y(Math.min(...keys.map(k => Math.log10(Math.max(1e-12, tot(rt[k], 10 ** g)))))).toFixed(1)}`).join(' ');
   svg += `<polyline class="rp-env" points="${env}"/>`;
-  for (const [k, y, on] of ends) svg += `<text class="rp-lab${on ? ' on' : ''}" x="${W - R + 5}" y="${(y + 4).toFixed(1)}">${k}</text>`;
+  for (const [k, y, on] of ends) svg += `<text class="rp-lab${on ? ' on' : ''}" x="${W - R + 5}" y="${(y + 4).toFixed(1)}">${NAME[k] || k}</text>`;
   b.slice(1).forEach(r => { const c = Math.log10(r[1]); if (c > x0 && c < x1) svg += `<line class="rp-cut" x1="${X(c).toFixed(1)}" y1="${T}" x2="${X(c).toFixed(1)}" y2="${H - B}"/>`; });
   if (here) svg += `<line class="rp-x" x1="${X(here[0]).toFixed(1)}" y1="${T}" x2="${X(here[0]).toFixed(1)}" y2="${H - B}"/><circle class="rp-pt" cx="${X(here[0]).toFixed(1)}" cy="${Y(here[1]).toFixed(1)}" r="4.5"/>`;
-  const cap = m.kind === 'trained' ? `${reg ? reg[0] + ' region · ' : ''}loss ${sci(10 ** here[1], 2)}` : here ? `at α<sub>imp</sub> = 10⁻⁴ · loss ${sci(10 ** here[1], 2)}` : '';
+  const cap = m.kind === 'trained' ? `${reg ? (NAME[reg[0]] || reg[0]) + ' region · ' : ''}loss ${sci(10 ** here[1], 2)}` : here ? `at α<sub>imp</sub> = 10⁻⁴ · loss ${sci(10 ** here[1], 2)}` : '';
   return `<div class="rplot"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="VPD loss of the oracle candidates against alpha_imp">${svg}</svg><p class="cap">${cap}</p></div>`; }
 function optBtn(text, on, title, onClick){ const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.innerHTML = `<span>${text}</span>`; b.setAttribute('aria-pressed', on ? 'true' : 'false'); if (title) b.title = title; b.addEventListener('click', onClick); return b; }
 const mname = m => m.title.replace(/ \(.*\)/, ''), sz = m => `${m.F}x${m.N}`;
@@ -358,8 +360,8 @@ function kv(pairs){ return `<div class="kv">${pairs.map(([k, v]) => `<span class
 function tags(list){ return `<div class="tags">${list.map(([t, s, c]) => `<span${c ? ` style="color:${c}"` : ''}>${t}<small>${s}</small></span>`).join('')}</div>`; }
 function renderPage(){ const pg = $('page'); $('regions').innerHTML = regionPlot(DEC.meta);
   if (!clicked) { $('eyebrow').hidden = true; const act = [...x].map((v, j) => [j, v]).filter(p => p[1]);
-    const m = DEC.meta; let h = `<h2>${m.kind === 'trained' ? `Learned, α<sub>imp</sub> = ${fmtA(m.alpha)}${DEC.key === 'default' ? ' (Goodfire default)' : ''}` : esc(DEC.label.replace(/^oracle: /, 'Oracle: '))}</h2>`;
-    if (m.kind === 'trained') h += `<p class="sub">${TILED.has(DEC.key) ? esc(DEC.label.replace(/^trained, /, '').replace(/,? ?alpha[^,]*/g, '').replace('feature-tiled init', 'FF init')) : 'random init'} · ${(m.steps / 1000).toFixed(0)}k steps</p>`;
+    const m = DEC.meta; let h = `<h2>${m.kind === 'trained' ? `Learned, α<sub>imp</sub> = ${fmtA(m.alpha)}${DEC.key === 'default' ? ' (Goodfire default)' : ''}` : esc(capf(NAME[DEC.key] || DEC.key) + ' oracle: ' + DEC.label.replace(/^oracle: /, ''))}</h2>`;
+    if (m.kind === 'trained') h += `<p class="sub">${TILED.has(DEC.key) ? esc(DEC.label.replace(/^trained, /, '').replace(/,? ?alpha[^,]*/g, '').replace('feature-tiled init', 'feature-aligned init')) : 'random init'} · ${(m.steps / 1000).toFixed(0)}k steps</p>`;
     if (collapsed(DEC)) h += `<p>Collapsed: no gate opens on any input.</p>`;
     h += `<div class="sec">Input</div>` + (act.length ? tags(act.map(([j, v]) => [j, v.toFixed(2)])) : '<p class="hint">None.</p>');
     const mse = (u, w) => u.reduce((s, v, k) => s + (v - w[k]) ** 2, 0) / u.length; const relu = [...x].map(v => Math.max(0, v));
