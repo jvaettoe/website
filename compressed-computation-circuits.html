@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Circuits in Compressed Computation — Joonas Mikael Vättö</title>
-<meta name="description" content="Interactive circuit tracer: parameter decompositions (VPD) of a toy model computing ReLU(x) for 64 features with 16 neurons. Supplementary material by Joonas Mikael Vättö and Stefan Heimersheim.">
+<meta name="description" content="Interactive circuit tracer: parameter decompositions (VPD) of a toy model computing ReLU(x) for 64 features with 16 or 64 neurons. Supplementary material by Joonas Mikael Vättö and Stefan Heimersheim.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://vatto.io/compressed-computation-circuits">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Joonas Mikael Vättö">
 <meta property="og:title" content="Circuits in Compressed Computation">
-<meta property="og:description" content="Interactive circuit tracer: parameter decompositions (VPD) of a toy model computing ReLU(x) for 64 features with 16 neurons. Supplementary material by Joonas Mikael Vättö and Stefan Heimersheim.">
+<meta property="og:description" content="Interactive circuit tracer: parameter decompositions (VPD) of a toy model computing ReLU(x) for 64 features with 16 or 64 neurons. Supplementary material by Joonas Mikael Vättö and Stefan Heimersheim.">
 <meta property="og:url" content="https://vatto.io/compressed-computation-circuits">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -56,6 +56,7 @@ h1{margin:0;font-family:var(--serif);font-weight:400;font-size:38px;line-height:
 .opt{color:var(--mute);min-height:32px;display:inline-flex;align-items:center;text-decoration:none}
 .opt:hover{color:var(--ink)}
 .opt[aria-pressed="true"]{color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink);text-underline-offset:5px}
+.opt:disabled{color:var(--faint);cursor:not-allowed}
 #decs{flex-direction:column;align-items:stretch;gap:0}
 #decs .opt{min-height:26px}
 #decs .grp{line-height:1.4}
@@ -152,10 +153,11 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
 <section class="intro">
   <h1>Circuits in Compressed Computation</h1>
   <p class="byline">Supplementary material to <a class="post" href="#lw-post" data-todo="lw-post-url" title="LessWrong post (link to be added)"><span class="lw" aria-hidden="true">LW</span><span>[post title and link to be added]</span></a>, Joonas&nbsp;Mikael&nbsp;Vättö and Stefan&nbsp;Heimersheim 2026</p>
-  <p class="lede">A live, masked forward pass through a parameter decomposition of a one-hidden-layer toy model that computes ReLU(x) for 64 features with 16 neurons, <span id="regime">each feature active with probability 1/64</span>. Click input squares to switch features on (shift-click for a negative value), hover any node to see where its signal goes, and click it for its card.</p>
+  <p class="lede">A live, masked forward pass through a parameter decomposition of a one-hidden-layer toy model that computes ReLU(x) for <span id="fcount">64</span> features with <span id="ncount">16</span> neurons, <span id="regime">each feature active with probability 1/64</span>. Click input squares to switch features on (shift-click for a negative value), hover any node to see where its signal goes, and click it for its card.</p>
 </section>
 
 <div class="rows">
+  <div class="r"><span class="k">size</span><div class="v" id="sizes" role="group" aria-label="Size"></div></div>
   <div class="r"><span class="k">model</span><div class="v" id="cells" role="group" aria-label="Model"></div></div>
   <div class="r"><span class="k">decomposition</span><div class="v" id="decs" role="group" aria-label="Decomposition"></div></div>
 </div>
@@ -197,7 +199,7 @@ footer{padding:40px 0;font-size:13px;color:var(--mute)}
 <script>
 (function(){
 const DATA = window.TOY_DATA; const $ = id => document.getElementById(id); const NS = 'http://www.w3.org/2000/svg';
-const TILED = new Set(['tiledlong', 'slow10def', 'bandff', 'ff10', 'ffdef']);
+const TILED = new Set(['tiledlong', 'slow10def', 'bandff', 'ff10', 'ffdef', 'ffwinff']);
 function optLabel(d){ return d.meta.kind === 'oracle' ? d.key : `α<sub>imp</sub> = ${fmtA(d.meta.alpha)}<span class="init"> · ${TILED.has(d.key) ? 'FF init' : 'random init'}</span>`; }
 const collapsed = d => d.meta.kind === 'trained' && d.stats.w_in.L0 === 0 && d.stats.w_out.L0 === 0;
 const TITLE = {FF: 'feature read, feature write', FN: 'feature read, neuron write', NN: 'neuron read, neuron write'};
@@ -245,7 +247,19 @@ function regionPlot(m){ const rt = M.oracle_rt, b = M.bands || []; if (!rt) retu
   const cap = m.kind === 'trained' ? `${reg ? reg[0] + ' region · ' : ''}loss ${sci(10 ** here[1], 2)}` : here ? `at α<sub>imp</sub> = 10⁻⁴ · loss ${sci(10 ** here[1], 2)}` : '';
   return `<div class="rplot"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="VPD loss of the oracle candidates against alpha_imp">${svg}</svg><p class="cap">${cap}</p></div>`; }
 function optBtn(text, on, title, onClick){ const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.innerHTML = `<span>${text}</span>`; b.setAttribute('aria-pressed', on ? 'true' : 'false'); if (title) b.title = title; b.addEventListener('click', onClick); return b; }
-function renderCells(){ const box = $('cells'); box.innerHTML = ''; DATA.forEach((m, i) => box.appendChild(optBtn(m.title.replace(/ \(.*\)/, ''), i === CI, `F = ${m.F} features, N = ${m.N} neurons`, () => { if (i !== CI) setCell(i, 0); })));
+const mname = m => m.title.replace(/ \(.*\)/, ''), sz = m => `${m.F}x${m.N}`;
+function renderCells(){
+  // size row: one button per (F, N); model row: the models at this size (others shown disabled)
+  const sb = $('sizes'); sb.innerHTML = ''; const sizes = [...new Set(DATA.map(sz))];
+  sizes.forEach(k => { const m0 = DATA.find(m => sz(m) === k);
+    sb.appendChild(optBtn(`${m0.F} features · ${m0.N} neurons`, k === sz(M), `F = ${m0.F}, N = ${m0.N}, compression δ = N/F = ${m0.N}/${m0.F}`, () => { if (k === sz(M)) return;
+      const j = DATA.findIndex(m => sz(m) === k && mname(m) === mname(M)); const i = j >= 0 ? j : DATA.findIndex(m => sz(m) === k);
+      setCell(i, Math.max(0, DATA[i].decomps.findIndex(d => d.key === 'default'))); })); });
+  const box = $('cells'); box.innerHTML = '';
+  [...new Set(DATA.map(mname))].forEach(nm => { const i = DATA.findIndex(m => mname(m) === nm && sz(m) === sz(M));
+    const b = optBtn(nm, i === CI, i < 0 ? `not available at F = ${M.F}, N = ${M.N}` : `F = ${M.F} features, N = ${M.N} neurons`, () => { if (i >= 0 && i !== CI) setCell(i, Math.max(0, DATA[i].decomps.findIndex(d => d.key === 'default'))); });
+    if (i < 0) b.disabled = true; box.appendChild(b); });
+  $('fcount').textContent = M.F; $('ncount').textContent = M.N;
   $('regime').textContent = M.eq1 ? 'exactly one feature active per input' : `each feature active with probability 1/${M.F}`; }
 function renderDecs(di){ const box = $('decs'); box.innerHTML = '';
   const groups = [['Oracle', d => d.meta.kind === 'oracle'], ['Learned', d => d.meta.kind === 'trained' && !collapsed(d)], ['Collapsed gates', d => collapsed(d)]];
